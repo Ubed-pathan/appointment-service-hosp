@@ -1,5 +1,6 @@
 package com.appointment.appointment_service.Models;
 
+import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -14,7 +15,7 @@ import java.time.LocalDateTime;
 public class AppointmentModel {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(length = 12, nullable = false, updatable = false)
     private String appointmentId;
 
     @Column(
@@ -58,6 +59,17 @@ public class AppointmentModel {
 
     @PrePersist
     protected void onCreate() {
+        if (this.appointmentId == null || this.appointmentId.isEmpty()) {
+            // Custom 10-character NanoID using uppercase letters and digits
+            String alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            int size = 10;
+
+            this.appointmentId = NanoIdUtils.randomNanoId(
+                    NanoIdUtils.DEFAULT_NUMBER_GENERATOR,
+                    alphabet.toCharArray(),
+                    size
+            );
+        }
         createdAt = LocalDateTime.now();
     }
 }
