@@ -13,7 +13,6 @@ import java.time.format.DateTimeFormatter;
 
 @Service
 @AllArgsConstructor
-@NoArgsConstructor
 public class AppointmentService {
 
     private AppointmentRepository appointmentRepository;

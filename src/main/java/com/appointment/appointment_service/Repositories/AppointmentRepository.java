@@ -7,9 +7,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface AppointmentRepository extends JpaRepository<AppointmentModel, String> {
-    // Find all appointments for a specific patient
-    List<AppointmentModel> findByPatientId(String patientId);
-
     // Find all appointments for a specific doctor
     List<AppointmentModel> findByDoctorId(String doctorId);
 
