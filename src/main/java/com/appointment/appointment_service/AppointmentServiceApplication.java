@@ -2,8 +2,10 @@ package com.appointment.appointment_service;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 
 @SpringBootApplication
+@EnableDiscoveryClient
 // from spring boot 3 and above @EnableEurekaClient is not needed
 public class AppointmentServiceApplication {
 
