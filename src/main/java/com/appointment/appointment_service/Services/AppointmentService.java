@@ -1,5 +1,7 @@
 package com.appointment.appointment_service.Services;
 
+import com.appointment.appointment_service.Clients.DoctorServiceClient;
+import com.appointment.appointment_service.Clients.UserServiceClient;
 import com.appointment.appointment_service.Dtos.AppointmentDto;
 import com.appointment.appointment_service.Models.AppointmentModel;
 import com.appointment.appointment_service.Repositories.AppointmentRepository;
@@ -15,9 +17,23 @@ import java.time.format.DateTimeFormatter;
 @AllArgsConstructor
 public class AppointmentService {
 
-    private AppointmentRepository appointmentRepository;
+    private final AppointmentRepository appointmentRepository;
+    private final UserServiceClient userServiceClient;
+    private final DoctorServiceClient doctorServiceClient;
 
     public String bookAppointment(AppointmentDto dto) {
+
+        boolean isUserExists = userServiceClient.isUserExists(dto.userId());
+        boolean isDocterExists = doctorServiceClient.isDocterExists(dto.doctorId());
+
+        if (!isUserExists) {
+            throw new RuntimeException("User does not exist.");
+        }
+
+        if (!isDocterExists) {
+            throw new RuntimeException("Doctor does not exist.");
+        }
+
         LocalDate appointmentDate = dto.appointmentTime().toLocalDate();
         LocalDateTime startOfDay = appointmentDate.atStartOfDay();
         LocalDateTime endOfDay = appointmentDate.atTime(23, 59, 59);
