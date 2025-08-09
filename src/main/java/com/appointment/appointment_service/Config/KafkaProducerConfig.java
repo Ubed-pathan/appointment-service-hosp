@@ -1,6 +1,6 @@
 package com.appointment.appointment_service.Config;
 
-import com.appointment.events.AppointmentCreatedEvent;
+import com.appointment.appointment_service.Dtos.AppointmentCreatedEvent;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.context.annotation.Bean;

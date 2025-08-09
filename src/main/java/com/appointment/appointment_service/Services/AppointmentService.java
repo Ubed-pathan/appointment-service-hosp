@@ -1,12 +1,12 @@
 package com.appointment.appointment_service.Services;
 
 import com.appointment.appointment_service.Clients.DoctorServiceClient;
-import com.appointment.appointment_service.Clients.UserServiceClient;
+import com.appointment.appointment_service.Dtos.AppointmentCreatedEvent;
 import com.appointment.appointment_service.Dtos.AppointmentDto;
 import com.appointment.appointment_service.Models.AppointmentModel;
 import com.appointment.appointment_service.Repositories.AppointmentRepository;
 import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -18,56 +18,61 @@ import java.time.format.DateTimeFormatter;
 public class AppointmentService {
 
     private final AppointmentRepository appointmentRepository;
-    private final UserServiceClient userServiceClient;
     private final DoctorServiceClient doctorServiceClient;
+    private final KafkaTemplate<String, AppointmentCreatedEvent> kafkaTemplate;
 
     public String bookAppointment(AppointmentDto dto) {
 
-        boolean isUserExists = userServiceClient.isUserExists(dto.userId());
-        boolean isDocterExists = doctorServiceClient.isDocterExists(dto.doctorId());
-
-        if (!isUserExists) {
-            throw new RuntimeException("User does not exist.");
-        }
-
-        if (!isDocterExists) {
-            throw new RuntimeException("Doctor does not exist.");
-        }
+        // Only checking doctor existence now — user data comes from frontend
+        boolean isDoctorExists = doctorServiceClient.isDocterExists(dto.doctorId());
+        if (!isDoctorExists) throw new RuntimeException("Doctor does not exist.");
 
         LocalDate appointmentDate = dto.appointmentTime().toLocalDate();
         LocalDateTime startOfDay = appointmentDate.atStartOfDay();
         LocalDateTime endOfDay = appointmentDate.atTime(23, 59, 59);
 
-        // Check: has the user already booked with this doctor on the same day?
         boolean alreadyBooked = appointmentRepository.existsByUserIdAndDoctorIdAndAppointmentTimeBetween(
-                dto.userId(),
-                dto.doctorId(),
-                startOfDay,
-                endOfDay
-        );
+                dto.userId(), dto.doctorId(), startOfDay, endOfDay);
+        if (alreadyBooked) throw new RuntimeException("User already has an appointment with this doctor on the same day.");
 
-        if (alreadyBooked) {
-            throw new RuntimeException("User already has an appointment with this doctor on the same day.");
-        }
-
-        // Check: is the time slot already taken by another user?
         boolean slotTaken = appointmentRepository.existsByDoctorIdAndAppointmentTime(
-                dto.doctorId(),
-                dto.appointmentTime()
-        );
+                dto.doctorId(), dto.appointmentTime());
+        if (slotTaken) throw new RuntimeException("Appointment slot is already booked.");
 
-        if (slotTaken) {
-            throw new RuntimeException("Appointment slot is already booked.");
-        }
+        // Save appointment
         AppointmentModel appointmentModel = new AppointmentModel();
         appointmentModel.setAppointmentTime(dto.appointmentTime());
         appointmentModel.setUserId(dto.userId());
         appointmentModel.setDoctorId(dto.doctorId());
         appointmentModel.setReason(dto.reason());
         appointmentRepository.save(appointmentModel);
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("h:mm a"); // 12-hour format with AM/PM
-        String formattedTime = appointmentModel.getAppointmentTime().format(formatter);
-        return "Appointment booked at " + formattedTime + ". Your appointment ID is " + appointmentModel.getAppointmentId();
 
+        // Build event directly from dto
+        var event = new AppointmentCreatedEvent(
+                appointmentModel.getAppointmentId(),
+                dto.userId(),
+                dto.usersFullName(),
+                dto.usersEmail(),
+                dto.doctorId(),
+                dto.appointmentTime(),
+                dto.reason()
+        );
+
+        // Publish to Kafka
+        kafkaTemplate.send("appointments.created", appointmentModel.getAppointmentId(), event)
+                .thenAccept(result ->
+                        System.out.println("Published appointment-created event: " + appointmentModel.getAppointmentId())
+                )
+                .exceptionally(ex -> {
+                    System.err.println("Failed to publish appointment event: " + ex.getMessage());
+                    // Optional: store in an outbox for retry
+                    return null;
+                });
+
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("h:mm a");
+        String formattedTime = appointmentModel.getAppointmentTime().format(formatter);
+        return "Appointment booked at " + formattedTime +
+                ". Your appointment ID is " + appointmentModel.getAppointmentId();
     }
 }
