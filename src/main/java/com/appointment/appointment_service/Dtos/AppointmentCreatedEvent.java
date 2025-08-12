@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 public record AppointmentCreatedEvent(
         String appointmentId,
         String userId,
-        String userName,
+        String usersFullName,
         String userEmail,
         String doctorId,
         LocalDateTime appointmentTime,
