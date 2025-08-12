@@ -15,6 +15,8 @@ services:
       - "5555:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    networks:
+      - app-network
   pgadmin:
     container_name: pgadmin2
     image: dpage/pgadmin4
@@ -27,6 +29,8 @@ services:
       - pgadmin:/var/lib/pgadmin
     ports:
       - "5252:80"
+    networks:
+      - app-network
   kafka:
     image: bitnami/kafka:3.5
     container_name: kafka
@@ -37,14 +41,21 @@ services:
       - KAFKA_CFG_PROCESS_ROLES=broker,controller
       - KAFKA_CFG_NODE_ID=1
       - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
-      - KAFKA_CFG_LISTENERS=PLAINTEXT://0.0.0.0:9092,CONTROLLER://:9093
-      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092
-      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://0.0.0.0:9092,PLAINTEXT_DOCKER://0.0.0.0:29092,CONTROLLER://:9093
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092,PLAINTEXT_DOCKER://kafka:9092
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_DOCKER:PLAINTEXT
       - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
       - ALLOW_PLAINTEXT_LISTENER=yes
       - KAFKA_CFG_LOG_DIRS=/bitnami/kafka/data
     volumes:
       - kafka_data:/bitnami/kafka
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "bash", "-c", "echo > /dev/tcp/localhost/9092"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
     container_name: kafka_ui
@@ -54,7 +65,18 @@ services:
       - "8080:8080"
     environment:
       KAFKA_CLUSTERS_0_NAME: local
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: host.docker.internal:9092
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+    networks:
+      - app-network
+    command: >
+      sh -c "
+        apk add --no-cache busybox-extras && \
+        until nc -z kafka 9092; do
+          echo 'Waiting for Kafka...';
+          sleep 2;
+        done;
+        /bin/sh /entrypoint.sh
+      "
 
 
 volumes:
@@ -62,3 +84,7 @@ volumes:
   pgadmin:
   kafka_data:
     driver: local
+
+networks:
+  app-network:
+    driver: bridge
