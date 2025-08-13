@@ -7,7 +7,7 @@ public record AppointmentCreatedEvent(
         String userId,
         String usersFullName,
         String userEmail,
-        String doctorId,
+        String doctorFullName,
         LocalDateTime appointmentTime,
         String reason
 ) {}

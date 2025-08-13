@@ -24,8 +24,8 @@ public class AppointmentService {
     public String bookAppointment(AppointmentDto dto) {
 
         // Only checking doctor existence now — user data comes from frontend
-        boolean isDoctorExists = doctorServiceClient.isDocterExists(dto.doctorId());
-        if (!isDoctorExists) throw new RuntimeException("Doctor does not exist.");
+        String doctorFullName = doctorServiceClient.isDocterExists(dto.doctorId());
+        if (doctorFullName.isEmpty()) throw new RuntimeException("Doctor does not exist.");
 
         LocalDate appointmentDate = dto.appointmentTime().toLocalDate();
         LocalDateTime startOfDay = appointmentDate.atStartOfDay();
@@ -53,7 +53,7 @@ public class AppointmentService {
                 dto.userId(),
                 dto.usersFullName(),
                 dto.usersEmail(),
-                dto.doctorId(),
+                doctorFullName,
                 dto.appointmentTime(),
                 dto.reason()
         );
