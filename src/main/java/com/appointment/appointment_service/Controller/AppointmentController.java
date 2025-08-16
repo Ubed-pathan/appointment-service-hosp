@@ -6,10 +6,7 @@ import com.appointment.appointment_service.Services.AppointmentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping()
@@ -23,6 +20,26 @@ public class AppointmentController {
         try {
             String bookedAppointment = appointmentService.bookAppointment(dto);
             return ResponseEntity.ok(bookedAppointment);
+        } catch (RuntimeException ex) {
+            return ResponseEntity.badRequest().body(ex.getMessage());
+        }
+    }
+
+    @GetMapping("/cancel/{appointmentId}")
+    public ResponseEntity<?> cancelAppointment(@PathVariable String appointmentId) {
+        try{
+            String cancelledAppointment = appointmentService.cancelAppointment(appointmentId);
+            return ResponseEntity.ok(cancelledAppointment);
+        } catch (RuntimeException ex) {
+            return ResponseEntity.badRequest().body(ex.getMessage());
+        }
+    }
+
+    @GetMapping("/complete/{appointmentId}")
+    public ResponseEntity<?> completeAppointment(@PathVariable String appointmentId) {
+        try {
+            String completedAppointment = appointmentService.completeAppointment(appointmentId);
+            return ResponseEntity.ok(completedAppointment);
         } catch (RuntimeException ex) {
             return ResponseEntity.badRequest().body(ex.getMessage());
         }
