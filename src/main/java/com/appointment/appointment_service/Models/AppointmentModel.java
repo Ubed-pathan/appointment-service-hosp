@@ -32,9 +32,27 @@ public class AppointmentModel {
 
     @Column(
             nullable = false,
+            length = 100
+    )
+    private String usersFullName;
+
+    @Column(
+            nullable = false,
+            length = 100
+    )
+    private String usersEmail;
+
+    @Column(
+            nullable = false,
             updatable = false
     )
     private String doctorId;
+
+    @Column(
+            nullable = false,
+            length = 100
+    )
+    private String doctorFullName;
 
     @Column(
                     nullable = false,

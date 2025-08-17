@@ -7,5 +7,5 @@ import org.springframework.web.bind.annotation.PostMapping;
 @FeignClient(name = "user-service")
 public interface UserClient {
     @PostMapping("/user/isValid/")
-    boolean isValidUser(UserVerificationDto Dto);
+    UserVerificationDto isValidUser(UserVerificationDto Dto);
 }

@@ -24,12 +24,17 @@ public class AppointmentService {
     private final UserClient userServiceClient;
     private final KafkaTemplate<String, AppointmentCreatedEvent> kafkaTemplate;
 
+    private UserVerificationDto checkUserValidity(UserVerificationDto userDto) {
+        return userServiceClient.isValidUser(userDto);
+    }
+
     public String bookAppointment(AppointmentDto dto) {
 
         UserVerificationDto userDto = new UserVerificationDto(dto.userId(), dto.usersFullName(), dto.usersEmail());
 
-        boolean isUserValid = userServiceClient.isValidUser(userDto);
-        if( !isUserValid ) {
+        UserVerificationDto isUserValid = checkUserValidity(userDto);
+
+        if(isUserValid == null) {
             throw new RuntimeException("User does not exist or is invalid.");
         }
         // Only checking doctor existence now — user data comes from frontend
@@ -96,15 +101,26 @@ public class AppointmentService {
         appointment.setStatus(AppointmentModel.AppointmentStatus.CANCELLED);
         appointmentRepository.save(appointment);
 
+        // Build event directly from dto
+        var event = new AppointmentCreatedEvent(
+                appointment.getAppointmentId(),
+                appointment.getUserId(),
+                appointment.getUsersFullName(),
+                appointment.getUsersEmail(),
+                appointment.getDoctorFullName(),
+                appointment.getAppointmentTime(),
+                appointment.getReason()
+        );
+
         // Publish cancellation event
-//        kafkaTemplate.send("appointments.cancelled", appointmentId, appointment)
-//                .thenAccept(result ->
-//                        System.out.println("Published appointment-cancelled event: " + appointmentId)
-//                )
-//                .exceptionally(ex -> {
-//                    System.err.println("Failed to publish cancellation event: " + ex.getMessage());
-//                    return null;
-//                });
+        kafkaTemplate.send("appointments.cancelled", appointmentId, event)
+                .thenAccept(result ->
+                        System.out.println("Published appointment-cancelled event: " + appointmentId)
+                )
+                .exceptionally(ex -> {
+                    System.err.println("Failed to publish cancellation event: " + ex.getMessage());
+                    return null;
+                });
 
         return "Appointment with ID " + appointmentId + " has been cancelled.";
     }
@@ -117,18 +133,30 @@ public class AppointmentService {
             return "Appointment is already completed.";
         }
 
+
         appointment.setStatus(AppointmentModel.AppointmentStatus.COMPLETED);
         appointmentRepository.save(appointment);
 
-//        // Publish completion event
-////        kafkaTemplate.send("appointments.completed", appointmentId, appointment)
-//                .thenAccept(result ->
-//                        System.out.println("Published appointment-completed event: " + appointmentId)
-//                )
-//                .exceptionally(ex -> {
-//                    System.err.println("Failed to publish completion event: " + ex.getMessage());
-//                    return null;
-//                });
+        // Build event directly from dto
+        var event = new AppointmentCreatedEvent(
+                appointment.getAppointmentId(),
+                appointment.getUserId(),
+                appointment.getUsersFullName(),
+                appointment.getUsersEmail(),
+                appointment.getDoctorFullName(),
+                appointment.getAppointmentTime(),
+                appointment.getReason()
+        );
+
+        // Publish completion event
+        kafkaTemplate.send("appointments.completed", appointmentId, event)
+                .thenAccept(result ->
+                        System.out.println("Published appointment-completed event: " + appointmentId)
+                )
+                .exceptionally(ex -> {
+                    System.err.println("Failed to publish completion event: " + ex.getMessage());
+                    return null;
+                });
 
         return "Appointment with ID " + appointmentId + " has been completed.";
     }
