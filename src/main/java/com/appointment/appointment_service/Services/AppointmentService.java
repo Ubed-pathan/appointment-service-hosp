@@ -57,7 +57,10 @@ public class AppointmentService {
         AppointmentModel appointmentModel = new AppointmentModel();
         appointmentModel.setAppointmentTime(dto.appointmentTime());
         appointmentModel.setUserId(dto.userId());
+        appointmentModel.setUsersEmail(isUserValid.usersEmail());
+        appointmentModel.setUsersFullName(isUserValid.usersFullName());
         appointmentModel.setDoctorId(dto.doctorId());
+        appointmentModel.setDoctorFullName(doctorFullName);
         appointmentModel.setReason(dto.reason());
         appointmentRepository.save(appointmentModel);
 
