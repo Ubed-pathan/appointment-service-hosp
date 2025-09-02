@@ -1,16 +1,17 @@
 package com.appointment.appointment_service.Dtos;
 
+import java.time.LocalDateTime;
+
 public record AppointmentDotForAdminDashboard(
         String appointmentId,
-        String appointmentTime,
-        String status,
+        LocalDateTime appointmentTime,
+        String AppointmentStatus,
         String userId,
         String usersFullName,
         String usersEmail,
-        String usersPhoneNumber,
-        String doctorId,
         String doctorsFullName,
         String doctorsEmail,
-        String doctorsPhoneNumber
+        String reason,
+        LocalDateTime createdAt
 ){
 }

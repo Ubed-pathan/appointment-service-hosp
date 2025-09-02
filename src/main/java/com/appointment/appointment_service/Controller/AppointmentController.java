@@ -44,4 +44,13 @@ public class AppointmentController {
             return ResponseEntity.badRequest().body(ex.getMessage());
         }
     }
+
+    @GetMapping("/getAllAppointments" )
+    public ResponseEntity<?> getAllAppointments() {
+        try {
+            return ResponseEntity.ok(appointmentService.getAllAppointments());
+        } catch (RuntimeException ex) {
+            return ResponseEntity.badRequest().body(ex.getMessage());
+        }
+    }
 }

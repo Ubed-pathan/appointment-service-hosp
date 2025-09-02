@@ -3,6 +3,7 @@ package com.appointment.appointment_service.Services;
 import com.appointment.appointment_service.Clients.DoctorClient;
 import com.appointment.appointment_service.Clients.UserClient;
 import com.appointment.appointment_service.Dtos.AppointmentCreatedEvent;
+import com.appointment.appointment_service.Dtos.AppointmentDotForAdminDashboard;
 import com.appointment.appointment_service.Dtos.AppointmentDto;
 import com.appointment.appointment_service.Dtos.UserVerificationDto;
 import com.appointment.appointment_service.Models.AppointmentModel;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 @Service
 @AllArgsConstructor
@@ -162,5 +164,21 @@ public class AppointmentService {
                 });
 
         return "Appointment with ID " + appointmentId + " has been completed.";
+    }
+
+    public List<AppointmentDotForAdminDashboard> getAllAppointments() {
+        List<AppointmentModel> appointmentModels = appointmentRepository.findAll();
+        return appointmentModels.stream().map(appointment -> new AppointmentDotForAdminDashboard(
+                appointment.getAppointmentId(),
+                appointment.getAppointmentTime(),
+                appointment.getStatus().name(),
+                appointment.getUserId(),
+                appointment.getUsersFullName(),
+                appointment.getUsersEmail(),
+                appointment.getDoctorId(),
+                appointment.getDoctorFullName(),
+                appointment.getReason(),
+                appointment.getCreatedAt()
+        )).toList();
     }
 }
