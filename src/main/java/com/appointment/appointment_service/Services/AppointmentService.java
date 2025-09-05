@@ -35,7 +35,6 @@ public class AppointmentService {
         UserVerificationDto userDto = new UserVerificationDto(dto.userId(), dto.usersFullName(), dto.usersEmail());
 
         UserVerificationDto isUserValid = checkUserValidity(userDto);
-
         if(isUserValid == null) {
             throw new RuntimeException("User does not exist or is invalid.");
         }
