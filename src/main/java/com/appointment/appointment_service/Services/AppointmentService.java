@@ -2,10 +2,7 @@ package com.appointment.appointment_service.Services;
 
 import com.appointment.appointment_service.Clients.DoctorClient;
 import com.appointment.appointment_service.Clients.UserClient;
-import com.appointment.appointment_service.Dtos.AppointmentCreatedEvent;
-import com.appointment.appointment_service.Dtos.AppointmentDotForAdminDashboard;
-import com.appointment.appointment_service.Dtos.AppointmentDto;
-import com.appointment.appointment_service.Dtos.UserVerificationDto;
+import com.appointment.appointment_service.Dtos.*;
 import com.appointment.appointment_service.Models.AppointmentModel;
 import com.appointment.appointment_service.Repositories.AppointmentRepository;
 import lombok.AllArgsConstructor;
@@ -39,8 +36,8 @@ public class AppointmentService {
             throw new RuntimeException("User does not exist or is invalid.");
         }
         // Only checking doctor existence now — user data comes from frontend
-        String doctorFullName = doctorServiceClient.isDocterExists(dto.doctorId());
-        if (doctorFullName.isEmpty()) throw new RuntimeException("Doctor does not exist.");
+        DoctorDto doctorDto = doctorServiceClient.isDocterExists(dto.doctorId());
+        if (doctorDto == null) throw new RuntimeException("Doctor does not exist.");
 
         LocalDate appointmentDate = dto.appointmentTime().toLocalDate();
         LocalDateTime startOfDay = appointmentDate.atStartOfDay();
@@ -61,7 +58,8 @@ public class AppointmentService {
         appointmentModel.setUsersEmail(isUserValid.usersEmail());
         appointmentModel.setUsersFullName(isUserValid.usersFullName());
         appointmentModel.setDoctorId(dto.doctorId());
-        appointmentModel.setDoctorFullName(doctorFullName);
+        appointmentModel.setDoctorFullName(doctorDto.doctorsFullName());
+        appointmentModel.setDoctorSpecialization(doctorDto.doctorSpecialization());
         appointmentModel.setReason(dto.reason());
         appointmentRepository.save(appointmentModel);
 
@@ -71,7 +69,7 @@ public class AppointmentService {
                 dto.userId(),
                 dto.usersFullName(),
                 dto.usersEmail(),
-                doctorFullName,
+                doctorDto.doctorsFullName(),
                 dto.appointmentTime(),
                 dto.reason()
         );
@@ -178,6 +176,19 @@ public class AppointmentService {
                 appointment.getDoctorFullName(),
                 appointment.getReason(),
                 appointment.getCreatedAt()
+        )).toList();
+    }
+
+    public List<UsersAppointmentsDto> getUserAppointments(String userId) {
+        List<AppointmentModel> appointmentModels = appointmentRepository.findByUserId(userId);
+        return appointmentModels.stream().map(appointment -> new UsersAppointmentsDto(
+                appointment.getAppointmentId(),
+                appointment.getStatus().name(),
+                appointment.getDoctorId(),
+                appointment.getDoctorFullName(),
+                appointment.getDoctorSpecialization(),
+                appointment.getAppointmentTime(),
+                appointment.getReason()
         )).toList();
     }
 }

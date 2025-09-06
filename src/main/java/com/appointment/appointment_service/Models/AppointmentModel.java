@@ -55,6 +55,13 @@ public class AppointmentModel {
     private String doctorFullName;
 
     @Column(
+            nullable = false
+    )
+    private String doctorSpecialization;
+
+    private String appointmentType;
+
+    @Column(
                     nullable = false,
                     length = 250
     )
