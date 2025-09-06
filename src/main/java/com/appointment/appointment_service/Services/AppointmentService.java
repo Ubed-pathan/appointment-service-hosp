@@ -59,6 +59,7 @@ public class AppointmentService {
         appointmentModel.setUsersFullName(isUserValid.usersFullName());
         appointmentModel.setDoctorId(dto.doctorId());
         appointmentModel.setDoctorFullName(doctorDto.doctorsFullName());
+        appointmentModel.setDoctorUsername(doctorDto.doctorUsername());
         appointmentModel.setDoctorSpecialization(doctorDto.doctorSpecialization());
         appointmentModel.setReason(dto.reason());
         appointmentRepository.save(appointmentModel);
@@ -189,6 +190,19 @@ public class AppointmentService {
                 appointment.getDoctorSpecialization(),
                 appointment.getAppointmentTime(),
                 appointment.getReason()
+        )).toList();
+    }
+
+    public List<DoctorAppointmentDto> getDoctorAppointments(String doctorId) {
+        List<AppointmentModel> appointmentModels = appointmentRepository.findByDoctorId(doctorId);
+        return appointmentModels.stream().map(appointment -> new DoctorAppointmentDto(
+                appointment.getAppointmentId(),
+                appointment.getStatus().name(),
+                appointment.getUserId(),
+                appointment.getUsersFullName(),
+                appointment.getUsersEmail(),
+                appointment.getReason(),
+                appointment.getAppointmentTime()
         )).toList();
     }
 }
