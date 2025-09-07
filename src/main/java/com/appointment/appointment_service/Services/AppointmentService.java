@@ -193,8 +193,8 @@ public class AppointmentService {
         )).toList();
     }
 
-    public List<DoctorAppointmentDto> getDoctorAppointments(String doctorId) {
-        List<AppointmentModel> appointmentModels = appointmentRepository.findByDoctorId(doctorId);
+    public List<DoctorAppointmentDto> getDoctorAppointments(String doctorUsername) {
+        List<AppointmentModel> appointmentModels = appointmentRepository.findByDoctorUsername(doctorUsername);
         return appointmentModels.stream().map(appointment -> new DoctorAppointmentDto(
                 appointment.getAppointmentId(),
                 appointment.getStatus().name(),

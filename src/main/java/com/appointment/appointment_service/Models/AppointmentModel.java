@@ -61,12 +61,6 @@ public class AppointmentModel {
     private String doctorUsername;
 
     @Column(
-            nullable = false,
-            length = 100
-    )
-    private String doctorUsersEmail;
-
-    @Column(
             nullable = false
     )
     private String doctorSpecialization;

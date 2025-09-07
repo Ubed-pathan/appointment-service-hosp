@@ -71,4 +71,25 @@ public class AppointmentController {
             return ResponseEntity.badRequest().body(ex.getMessage());
         }
     }
+
+    @PatchMapping("/completeAppointment/{appointmentId}" )
+    public ResponseEntity<?> completeAppointmentPatch(@PathVariable String appointmentId) {
+        try {
+            System.out.println("Received request to complete appointment with ID: " + appointmentId);
+            String completedAppointment = appointmentService.completeAppointment(appointmentId);
+            return ResponseEntity.ok(completedAppointment);
+        } catch (RuntimeException ex) {
+            return ResponseEntity.badRequest().body(ex.getMessage());
+        }
+    }
+
+    @PatchMapping("/cancelAppointment/{appointmentId}" )
+    public ResponseEntity<?> cancelAppointmentPatch(@PathVariable String appointmentId) {
+        try {
+            String completedAppointment = appointmentService.cancelAppointment(appointmentId);
+            return ResponseEntity.ok(completedAppointment);
+        } catch (RuntimeException ex) {
+            return ResponseEntity.badRequest().body(ex.getMessage());
+        }
+    }
 }
