@@ -92,4 +92,13 @@ public class AppointmentController {
             return ResponseEntity.badRequest().body(ex.getMessage());
         }
     }
+
+    @GetMapping("/getAllPatientsOfDoctor/{doctorUsername}")
+    public ResponseEntity<?> getAllPatientsOfDoctor(@PathVariable String doctorUsername) {
+        try {
+            return ResponseEntity.ok(appointmentService.getAllPatientsOfDoctor(doctorUsername));
+        } catch (RuntimeException ex) {
+            return ResponseEntity.badRequest().body(ex.getMessage());
+        }
+    }
 }

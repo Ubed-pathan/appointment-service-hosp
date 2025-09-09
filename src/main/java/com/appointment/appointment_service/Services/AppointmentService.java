@@ -55,8 +55,13 @@ public class AppointmentService {
         AppointmentModel appointmentModel = new AppointmentModel();
         appointmentModel.setAppointmentTime(dto.appointmentTime());
         appointmentModel.setUserId(dto.userId());
-        appointmentModel.setUsersEmail(isUserValid.usersEmail());
-        appointmentModel.setUsersFullName(isUserValid.usersFullName());
+        // Persist email/fullName from request (fallback to validation response if request blank)
+        String safeFullName = (dto.usersFullName() != null && !dto.usersFullName().isBlank())
+                ? dto.usersFullName() : isUserValid.usersFullName();
+        String safeEmail = (dto.usersEmail() != null && !dto.usersEmail().isBlank())
+                ? dto.usersEmail() : isUserValid.usersEmail();
+        appointmentModel.setUsersFullName(safeFullName);
+        appointmentModel.setUsersEmail(safeEmail);
         appointmentModel.setDoctorId(dto.doctorId());
         appointmentModel.setDoctorFullName(doctorDto.doctorsFullName());
         appointmentModel.setDoctorUsername(doctorDto.doctorUsername());
@@ -68,8 +73,8 @@ public class AppointmentService {
         var event = new AppointmentCreatedEvent(
                 appointmentModel.getAppointmentId(),
                 dto.userId(),
-                dto.usersFullName(),
-                dto.usersEmail(),
+                safeFullName,
+                safeEmail,
                 doctorDto.doctorsFullName(),
                 dto.appointmentTime(),
                 dto.reason()
@@ -203,6 +208,20 @@ public class AppointmentService {
                 appointment.getUsersEmail(),
                 appointment.getReason(),
                 appointment.getAppointmentTime()
+        )).toList();
+    }
+
+    public List<PatientsOfDoctorDto> getAllPatientsOfDoctor(String doctorUsername) {
+        List<AppointmentModel> appointmentModels = appointmentRepository.findByDoctorUsername(doctorUsername);
+        return appointmentModels.stream().map(appointment -> new PatientsOfDoctorDto(
+                appointment.getAppointmentId(),
+                appointment.getAppointmentTime(),
+                appointment.getStatus().name(),
+                // Using userId as userName placeholder since username is not stored on appointment
+                appointment.getUserId(),
+                appointment.getUsersFullName(),
+                appointment.getUsersEmail(),
+                appointment.getReason()
         )).toList();
     }
 }
