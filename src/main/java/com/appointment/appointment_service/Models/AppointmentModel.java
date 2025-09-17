@@ -82,6 +82,7 @@ public class AppointmentModel {
         COMPLETED,
     }
 
+    @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean didUserGiveFeedback = false;
 
     @Column(
@@ -89,6 +90,9 @@ public class AppointmentModel {
             updatable = false
     )
     private LocalDateTime createdAt;
+
+    @OneToMany(mappedBy = "appointment", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private java.util.List<FeedbackModel> feedbacks;
 
     @PrePersist
     protected void onCreate() {

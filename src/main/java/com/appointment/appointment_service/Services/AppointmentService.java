@@ -4,6 +4,7 @@ import com.appointment.appointment_service.Clients.DoctorClient;
 import com.appointment.appointment_service.Clients.UserClient;
 import com.appointment.appointment_service.Dtos.*;
 import com.appointment.appointment_service.Models.AppointmentModel;
+import com.appointment.appointment_service.Models.FeedbackModel;
 import com.appointment.appointment_service.Repositories.AppointmentRepository;
 import com.appointment.appointment_service.Repositories.FeedbackRepository;
 import jakarta.validation.Valid;
@@ -210,7 +211,8 @@ public class AppointmentService {
                 appointment.getUsersFullName(),
                 appointment.getUsersEmail(),
                 appointment.getReason(),
-                appointment.getAppointmentTime()
+                appointment.getAppointmentTime(),
+                appointment.isDidUserGiveFeedback()
         )).toList();
     }
 
@@ -240,12 +242,11 @@ public class AppointmentService {
             throw new RuntimeException("Feedback can only be provided for completed appointments.");
         }
 
-        FeedbackDto feedback = new FeedbackDto(
-                dto.appointmentId(),
-                dto.doctorId(),
-                dto.review(),
-                dto.rating()
-        );
+        FeedbackModel feedback = new FeedbackModel();
+        feedback.setDoctorId(dto.doctorId());
+        feedback.setRating(dto.rating());
+        feedback.setReview(dto.review());
+        feedback.setAppointment(appointment); // appointmentModel must be fetched or created
 
         feedbackRepository.save(feedback);
         appointment.setDidUserGiveFeedback(true);

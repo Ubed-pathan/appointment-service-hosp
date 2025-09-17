@@ -1,10 +1,7 @@
 package com.appointment.appointment_service.Models;
 
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -15,17 +12,14 @@ import java.time.LocalDateTime;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class FeedbackDto {
-
-    @Id
-    @Column(length = 12, nullable = false, updatable = false)
-    private String feedbackId;
+public class FeedbackModel {
 
     @Column(nullable = false)
     private String doctorId;
 
-    @Column(nullable = false)
-    private String appointmentId;
+    @Id
+    @Column(length = 12, nullable = false, updatable = false)
+    private String feedbackId;
 
     @Column(nullable = false)
     private int rating; // e.g., 1 to 5
@@ -39,14 +33,18 @@ public class FeedbackDto {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "appointment_id", referencedColumnName = "appointmentId", nullable = false)
+    private AppointmentModel appointment;
+
     @PrePersist
     protected void onCreate() {
-        if (this.appointmentId == null || this.appointmentId.isEmpty()) {
+        if (this.feedbackId == null || this.feedbackId.isEmpty()) {
             // Custom 10-character NanoID using uppercase letters and digits
             String alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
             int size = 10;
 
-            this.appointmentId = NanoIdUtils.randomNanoId(
+            this.feedbackId = NanoIdUtils.randomNanoId(
                     NanoIdUtils.DEFAULT_NUMBER_GENERATOR,
                     alphabet.toCharArray(),
                     size
