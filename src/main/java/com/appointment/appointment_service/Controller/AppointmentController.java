@@ -1,6 +1,7 @@
 package com.appointment.appointment_service.Controller;
 
 import com.appointment.appointment_service.Dtos.AppointmentDto;
+import com.appointment.appointment_service.Dtos.FeedbackDto;
 import com.appointment.appointment_service.Models.AppointmentModel;
 import com.appointment.appointment_service.Services.AppointmentService;
 import jakarta.validation.Valid;
@@ -75,7 +76,6 @@ public class AppointmentController {
     @PatchMapping("/completeAppointment/{appointmentId}" )
     public ResponseEntity<?> completeAppointmentPatch(@PathVariable String appointmentId) {
         try {
-            System.out.println("Received request to complete appointment with ID: " + appointmentId);
             String completedAppointment = appointmentService.completeAppointment(appointmentId);
             return ResponseEntity.ok(completedAppointment);
         } catch (RuntimeException ex) {
@@ -100,5 +100,17 @@ public class AppointmentController {
         } catch (RuntimeException ex) {
             return ResponseEntity.badRequest().body(ex.getMessage());
         }
+    }
+
+    @PostMapping("/userFeedback" )
+    public ResponseEntity<?> userFeedback(@RequestBody @Valid FeedbackDto dto) {
+
+        try {
+            appointmentService.userFeedback(dto);
+            return ResponseEntity.ok("Feedback submitted successfully");
+        } catch (RuntimeException ex) {
+            return ResponseEntity.badRequest().body(ex.getMessage());
+        }
+
     }
 }

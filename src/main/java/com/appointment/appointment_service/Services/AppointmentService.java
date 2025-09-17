@@ -5,6 +5,8 @@ import com.appointment.appointment_service.Clients.UserClient;
 import com.appointment.appointment_service.Dtos.*;
 import com.appointment.appointment_service.Models.AppointmentModel;
 import com.appointment.appointment_service.Repositories.AppointmentRepository;
+import com.appointment.appointment_service.Repositories.FeedbackRepository;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
@@ -19,6 +21,7 @@ import java.util.List;
 public class AppointmentService {
 
     private final AppointmentRepository appointmentRepository;
+    private final FeedbackRepository feedbackRepository;
     private final DoctorClient doctorServiceClient;
     private final UserClient userServiceClient;
     private final KafkaTemplate<String, AppointmentCreatedEvent> kafkaTemplate;
@@ -223,5 +226,29 @@ public class AppointmentService {
                 appointment.getUsersEmail(),
                 appointment.getReason()
         )).toList();
+    }
+
+    public void userFeedback(@Valid FeedbackDto dto) {
+        AppointmentModel appointment = appointmentRepository.findById(dto.appointmentId())
+                .orElseThrow(() -> new RuntimeException("Appointment not found."));
+
+        if (!appointment.getDoctorId().equals(dto.doctorId())) {
+            throw new RuntimeException("User is not authorized to provide feedback for this appointment.");
+        }
+
+        if (appointment.getStatus() != AppointmentModel.AppointmentStatus.COMPLETED) {
+            throw new RuntimeException("Feedback can only be provided for completed appointments.");
+        }
+
+        FeedbackDto feedback = new FeedbackDto(
+                dto.appointmentId(),
+                dto.doctorId(),
+                dto.review(),
+                dto.rating()
+        );
+
+        feedbackRepository.save(feedback);
+        appointment.setDidUserGiveFeedback(true);
+        appointmentRepository.save(appointment);
     }
 }

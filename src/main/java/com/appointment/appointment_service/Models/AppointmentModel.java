@@ -82,6 +82,8 @@ public class AppointmentModel {
         COMPLETED,
     }
 
+    private boolean didUserGiveFeedback = false;
+
     @Column(
             nullable = false,
             updatable = false
