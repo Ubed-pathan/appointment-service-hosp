@@ -1,6 +1,7 @@
 package com.appointment.appointment_service.Repositories;
 
 import com.appointment.appointment_service.Models.AppointmentModel;
+import com.appointment.appointment_service.Models.FeedbackModel;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDateTime;
@@ -29,4 +30,5 @@ public interface AppointmentRepository extends JpaRepository<AppointmentModel, S
     List<AppointmentModel> findByUserId(String userId);
 
     List<AppointmentModel> findByDoctorUsername(String doctorUsername);
+
 }

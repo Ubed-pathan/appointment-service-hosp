@@ -113,4 +113,14 @@ public class AppointmentController {
         }
 
     }
+
+    @GetMapping("/getFeedbacksForAdmin/{doctorId}")
+    public ResponseEntity<?> getFeedbacksForAdmin(@PathVariable String doctorId) {
+        try {
+            var feedbacks = appointmentService.getFeedbacksForAdmin(doctorId);
+            return ResponseEntity.ok(feedbacks);
+        } catch (RuntimeException ex) {
+            return ResponseEntity.badRequest().body(ex.getMessage());
+        }
+    }
 }

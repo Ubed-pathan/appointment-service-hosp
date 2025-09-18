@@ -1,6 +1,7 @@
 package com.appointment.appointment_service.Dtos;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record DoctorAppointmentDto(
         String appointmentId,
@@ -10,6 +11,7 @@ public record DoctorAppointmentDto(
         String userEmail,
         String reason,
         LocalDateTime appointmentTime,
-        boolean didUserGiveFeedback
+        boolean didUserGiveFeedback,
+        List<FeedbackDto> feedbacks
 ) {
 }

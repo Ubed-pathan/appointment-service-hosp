@@ -17,6 +17,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+import static java.util.stream.Collectors.toList;
+
 @Service
 @AllArgsConstructor
 public class AppointmentService {
@@ -191,29 +193,52 @@ public class AppointmentService {
 
     public List<UsersAppointmentsDto> getUserAppointments(String userId) {
         List<AppointmentModel> appointmentModels = appointmentRepository.findByUserId(userId);
-        return appointmentModels.stream().map(appointment -> new UsersAppointmentsDto(
-                appointment.getAppointmentId(),
-                appointment.getStatus().name(),
-                appointment.getDoctorId(),
-                appointment.getDoctorFullName(),
-                appointment.getDoctorSpecialization(),
-                appointment.getAppointmentTime(),
-                appointment.getReason()
-        )).toList();
+        return appointmentModels.stream().map(appointment -> {
+            List<FeedbackDto> feedbacks = feedbackRepository.findByAppointment_AppointmentId(appointment.getAppointmentId())
+                    .stream()
+                    .map(f -> new FeedbackDto(
+                            f.getAppointment().getAppointmentId(),
+                            f.getDoctorId(),
+                            f.getReview(),
+                            f.getRating()
+                    )).toList();
+            return new UsersAppointmentsDto(
+                    appointment.getAppointmentId(),
+                    appointment.getStatus().name(),
+                    appointment.getDoctorId(),
+                    appointment.getDoctorFullName(),
+                    appointment.getDoctorSpecialization(),
+                    appointment.getAppointmentTime(),
+                    appointment.getReason(),
+                    appointment.isDidUserGiveFeedback(),
+                    feedbacks
+            );
+        }).toList();
     }
 
     public List<DoctorAppointmentDto> getDoctorAppointments(String doctorUsername) {
         List<AppointmentModel> appointmentModels = appointmentRepository.findByDoctorUsername(doctorUsername);
-        return appointmentModels.stream().map(appointment -> new DoctorAppointmentDto(
-                appointment.getAppointmentId(),
-                appointment.getStatus().name(),
-                appointment.getUserId(),
-                appointment.getUsersFullName(),
-                appointment.getUsersEmail(),
-                appointment.getReason(),
-                appointment.getAppointmentTime(),
-                appointment.isDidUserGiveFeedback()
-        )).toList();
+        return appointmentModels.stream().map(appointment -> {
+            List<FeedbackDto> feedbacks = feedbackRepository.findByAppointment_AppointmentId(appointment.getAppointmentId())
+                    .stream()
+                    .map(f -> new FeedbackDto(
+                            f.getAppointment().getAppointmentId(),
+                            f.getDoctorId(),
+                            f.getReview(),
+                            f.getRating()
+                    )).toList();
+            return new DoctorAppointmentDto(
+                    appointment.getAppointmentId(),
+                    appointment.getStatus().name(),
+                    appointment.getUserId(),
+                    appointment.getUsersFullName(),
+                    appointment.getUsersEmail(),
+                    appointment.getReason(),
+                    appointment.getAppointmentTime(),
+                    appointment.isDidUserGiveFeedback(),
+                    feedbacks
+            );
+        }).toList();
     }
 
     public List<PatientsOfDoctorDto> getAllPatientsOfDoctor(String doctorUsername) {
@@ -251,5 +276,21 @@ public class AppointmentService {
         feedbackRepository.save(feedback);
         appointment.setDidUserGiveFeedback(true);
         appointmentRepository.save(appointment);
+    }
+
+    public List<AdminFeedbackDto> getFeedbacksForAdmin(String doctorId) {
+        List<FeedbackModel> feedbacks = feedbackRepository.findByDoctorId(doctorId);
+        return feedbacks.stream().map(fb -> {
+            AppointmentModel appt = fb.getAppointment();
+            return new AdminFeedbackDto(
+                appt.getAppointmentId(),
+                appt.getAppointmentTime(),
+                appt.getUsersFullName(),
+                appt.getUsersEmail(),
+                appt.getDoctorFullName(),
+                fb.getRating(),
+                fb.getReview()
+            );
+        }).toList();
     }
 }
