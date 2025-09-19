@@ -9,6 +9,7 @@ public record AdminFeedbackDto(
     String userEmail,
     String doctorFullName,
     int rating,
-    String review
+    String review,
+    String feedbackId
 ) {}
 

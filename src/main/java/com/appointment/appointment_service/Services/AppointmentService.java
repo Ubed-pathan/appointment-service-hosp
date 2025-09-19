@@ -289,8 +289,17 @@ public class AppointmentService {
                 appt.getUsersEmail(),
                 appt.getDoctorFullName(),
                 fb.getRating(),
-                fb.getReview()
+                fb.getReview(),
+                fb.getFeedbackId()
             );
         }).toList();
+    }
+
+
+    public void deleteFeedback(String feedbackId) {
+        if (!feedbackRepository.existsById(feedbackId)) {
+            throw new RuntimeException("Feedback not found.");
+        }
+        feedbackRepository.deleteById(feedbackId);
     }
 }

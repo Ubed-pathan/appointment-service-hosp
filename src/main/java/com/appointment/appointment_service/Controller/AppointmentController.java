@@ -123,4 +123,15 @@ public class AppointmentController {
             return ResponseEntity.badRequest().body(ex.getMessage());
         }
     }
+
+
+    @DeleteMapping("/deleteFeedback/{feedbackId}")
+    public ResponseEntity<?> deleteFeedback(@PathVariable String feedbackId) {
+        try {
+            appointmentService.deleteFeedback(feedbackId);
+            return ResponseEntity.ok("Feedback deleted successfully.");
+        } catch (RuntimeException ex) {
+            return ResponseEntity.badRequest().body(ex.getMessage());
+        }
+    }
 }
