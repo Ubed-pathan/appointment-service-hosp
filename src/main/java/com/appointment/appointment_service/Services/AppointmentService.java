@@ -197,6 +197,7 @@ public class AppointmentService {
             List<FeedbackDto> feedbacks = feedbackRepository.findByAppointment_AppointmentId(appointment.getAppointmentId())
                     .stream()
                     .map(f -> new FeedbackDto(
+                            f.getFeedbackId(),
                             f.getAppointment().getAppointmentId(),
                             f.getDoctorId(),
                             f.getReview(),
@@ -222,6 +223,7 @@ public class AppointmentService {
             List<FeedbackDto> feedbacks = feedbackRepository.findByAppointment_AppointmentId(appointment.getAppointmentId())
                     .stream()
                     .map(f -> new FeedbackDto(
+                            f.getFeedbackId(),
                             f.getAppointment().getAppointmentId(),
                             f.getDoctorId(),
                             f.getReview(),
