@@ -4,3 +4,10 @@
 3. where to store slot
 4. if to user make slot at same time then
 5. next visit email
+
+21/09/2025
+1. check for username availability
+2. check for email availability
+3. check for phone number availability
+4. show the booked, available and unavailable slots in different colors
+3. check for appointment availability and avoid double booking
