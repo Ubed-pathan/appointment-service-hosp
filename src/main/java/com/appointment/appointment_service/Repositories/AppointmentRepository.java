@@ -13,13 +13,13 @@ public interface AppointmentRepository extends JpaRepository<AppointmentModel, S
 
 
     // Find appointments based on date/time string if you format it properly
-    List<AppointmentModel> findByAppointmentTime(LocalDateTime appointmentTime);
+    List<AppointmentModel> findByAppointmentStartTime(LocalDateTime appointmentStartTime);
 
-    boolean existsByDoctorIdAndAppointmentTime(String doctorId, LocalDateTime appointmentTime);
+    boolean existsByDoctorIdAndAppointmentStartTime(String doctorId, LocalDateTime appointmentStartTime);
 
-    boolean existsByUserIdAndAppointmentTime(String userId, LocalDateTime appointmentTime);
+    boolean existsByUserIdAndAppointmentStartTime(String userId, LocalDateTime appointmentStartTime);
 
-    boolean existsByUserIdAndDoctorIdAndAppointmentTimeBetween(
+    boolean existsByUserIdAndDoctorIdAndAppointmentStartTimeBetween(
             String userId,
             String doctorId,
             LocalDateTime startOfDay,
@@ -31,4 +31,10 @@ public interface AppointmentRepository extends JpaRepository<AppointmentModel, S
 
     List<AppointmentModel> findByDoctorUsername(String doctorUsername);
 
+    // Check if any existing appointment for the doctor overlaps the proposed range
+    boolean existsByDoctorIdAndAppointmentEndTimeGreaterThanAndAppointmentStartTimeLessThan(
+            String doctorId,
+            LocalDateTime proposedStart,
+            LocalDateTime proposedEnd
+    );
 }

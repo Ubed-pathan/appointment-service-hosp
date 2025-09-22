@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 
 public record PatientsOfDoctorDto(
         String appointmentId,
-        LocalDateTime appointmentTime,
+        LocalDateTime appointmentStartTime,
         String appointmentStatus,
         String userId,
         String usersFullName,
@@ -12,4 +12,3 @@ public record PatientsOfDoctorDto(
         String reason
 ) {
 }
-

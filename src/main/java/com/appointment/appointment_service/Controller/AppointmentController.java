@@ -134,4 +134,15 @@ public class AppointmentController {
             return ResponseEntity.badRequest().body(ex.getMessage());
         }
     }
+
+    @GetMapping("/doctorsBookedAppointments/{doctorUsername}" )
+    public ResponseEntity<?> doctorsBookedAppointments(@PathVariable String doctorUsername) {
+        try {
+            var appointments = appointmentService.doctorsBookedAppointments(doctorUsername);
+            return ResponseEntity.ok(appointments);
+        } catch (RuntimeException ex) {
+            return ResponseEntity.badRequest().body(ex.getMessage());
+        }
+    }
+
 }

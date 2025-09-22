@@ -26,7 +26,13 @@ public class AppointmentModel {
             nullable = false,
             updatable = false
     )
-    private LocalDateTime appointmentTime;
+    private LocalDateTime appointmentStartTime; // renamed from appointmentTime
+
+    @Column(
+            nullable = false,
+            updatable = false
+    )
+    private LocalDateTime appointmentEndTime; // unchanged
 
     @Column(
             nullable = false,

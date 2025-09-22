@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 
 public record AppointmentDotForAdminDashboard(
         String appointmentId,
-        LocalDateTime appointmentTime,
+        LocalDateTime appointmentStartTime,
         String AppointmentStatus,
         String userId,
         String usersFullName,

@@ -17,8 +17,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-import static java.util.stream.Collectors.toList;
-
 @Service
 @AllArgsConstructor
 public class AppointmentService {
@@ -41,27 +39,39 @@ public class AppointmentService {
         if(isUserValid == null) {
             throw new RuntimeException("User does not exist or is invalid.");
         }
-        // Only checking doctor existence now — user data comes from frontend
         DoctorDto doctorDto = doctorServiceClient.isDocterExists(dto.doctorId());
         if (doctorDto == null) throw new RuntimeException("Doctor does not exist.");
 
-        LocalDate appointmentDate = dto.appointmentTime().toLocalDate();
+        // Validate start/end times
+        if (dto.appointmentEndTime() == null) {
+            throw new RuntimeException("Appointment end time is required.");
+        }
+        if (!dto.appointmentEndTime().isAfter(dto.appointmentStartTime())) {
+            throw new RuntimeException("Appointment end time must be after start time.");
+        }
+        LocalDate appointmentDate = dto.appointmentStartTime().toLocalDate();
+        LocalDate appointmentEndDate = dto.appointmentEndTime().toLocalDate();
+        if (!appointmentDate.equals(appointmentEndDate)) {
+            throw new RuntimeException("Appointment must start and end on the same day.");
+        }
+
         LocalDateTime startOfDay = appointmentDate.atStartOfDay();
         LocalDateTime endOfDay = appointmentDate.atTime(23, 59, 59);
 
-        boolean alreadyBooked = appointmentRepository.existsByUserIdAndDoctorIdAndAppointmentTimeBetween(
+        boolean alreadyBooked = appointmentRepository.existsByUserIdAndDoctorIdAndAppointmentStartTimeBetween(
                 dto.userId(), dto.doctorId(), startOfDay, endOfDay);
-        if (alreadyBooked) throw new RuntimeException("User already has an appointment with this doctor on the same day.");
+        if (alreadyBooked) throw new RuntimeException("User already has an appointment with this doctor on this day.");
 
-        boolean slotTaken = appointmentRepository.existsByDoctorIdAndAppointmentTime(
-                dto.doctorId(), dto.appointmentTime());
-        if (slotTaken) throw new RuntimeException("Appointment slot is already booked.");
+        // Overlap detection: existing.end > new.start AND existing.start < new.end
+        boolean overlaps = appointmentRepository
+                .existsByDoctorIdAndAppointmentEndTimeGreaterThanAndAppointmentStartTimeLessThan(
+                        dto.doctorId(), dto.appointmentStartTime(), dto.appointmentEndTime());
+        if (overlaps) throw new RuntimeException("Requested time range overlaps an existing appointment.");
 
-        // Save appointment
         AppointmentModel appointmentModel = new AppointmentModel();
-        appointmentModel.setAppointmentTime(dto.appointmentTime());
+        appointmentModel.setAppointmentStartTime(dto.appointmentStartTime());
+        appointmentModel.setAppointmentEndTime(dto.appointmentEndTime());
         appointmentModel.setUserId(dto.userId());
-        // Persist email/fullName from request (fallback to validation response if request blank)
         String safeFullName = (dto.usersFullName() != null && !dto.usersFullName().isBlank())
                 ? dto.usersFullName() : isUserValid.usersFullName();
         String safeEmail = (dto.usersEmail() != null && !dto.usersEmail().isBlank())
@@ -75,32 +85,29 @@ public class AppointmentService {
         appointmentModel.setReason(dto.reason());
         appointmentRepository.save(appointmentModel);
 
-        // Build event directly from dto
         var event = new AppointmentCreatedEvent(
                 appointmentModel.getAppointmentId(),
                 dto.userId(),
                 safeFullName,
                 safeEmail,
                 doctorDto.doctorsFullName(),
-                dto.appointmentTime(),
+                dto.appointmentStartTime(),
                 dto.reason()
         );
 
-        // Publish to Kafka
         kafkaTemplate.send("appointments.created", appointmentModel.getAppointmentId(), event)
                 .thenAccept(result ->
                         System.out.println("Published appointment-created event: " + appointmentModel.getAppointmentId())
                 )
                 .exceptionally(ex -> {
                     System.err.println("Failed to publish appointment event: " + ex.getMessage());
-                    // Optional: store in an outbox for retry
                     return null;
                 });
 
-
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("h:mm a");
-        String formattedTime = appointmentModel.getAppointmentTime().format(formatter);
-        return "Appointment booked at " + formattedTime +
+        String formattedStart = appointmentModel.getAppointmentStartTime().format(formatter);
+        String formattedEnd = appointmentModel.getAppointmentEndTime().format(formatter);
+        return "Appointment booked from " + formattedStart + " to " + formattedEnd +
                 ". Your appointment ID is " + appointmentModel.getAppointmentId();
     }
 
@@ -122,7 +129,7 @@ public class AppointmentService {
                 appointment.getUsersFullName(),
                 appointment.getUsersEmail(),
                 appointment.getDoctorFullName(),
-                appointment.getAppointmentTime(),
+                appointment.getAppointmentStartTime(),
                 appointment.getReason()
         );
 
@@ -158,7 +165,7 @@ public class AppointmentService {
                 appointment.getUsersFullName(),
                 appointment.getUsersEmail(),
                 appointment.getDoctorFullName(),
-                appointment.getAppointmentTime(),
+                appointment.getAppointmentStartTime(),
                 appointment.getReason()
         );
 
@@ -179,7 +186,7 @@ public class AppointmentService {
         List<AppointmentModel> appointmentModels = appointmentRepository.findAll();
         return appointmentModels.stream().map(appointment -> new AppointmentDotForAdminDashboard(
                 appointment.getAppointmentId(),
-                appointment.getAppointmentTime(),
+                appointment.getAppointmentStartTime(),
                 appointment.getStatus().name(),
                 appointment.getUserId(),
                 appointment.getUsersFullName(),
@@ -209,7 +216,7 @@ public class AppointmentService {
                     appointment.getDoctorId(),
                     appointment.getDoctorFullName(),
                     appointment.getDoctorSpecialization(),
-                    appointment.getAppointmentTime(),
+                    appointment.getAppointmentStartTime(),
                     appointment.getReason(),
                     appointment.isDidUserGiveFeedback(),
                     feedbacks
@@ -236,7 +243,7 @@ public class AppointmentService {
                     appointment.getUsersFullName(),
                     appointment.getUsersEmail(),
                     appointment.getReason(),
-                    appointment.getAppointmentTime(),
+                    appointment.getAppointmentStartTime(),
                     appointment.isDidUserGiveFeedback(),
                     feedbacks
             );
@@ -247,7 +254,7 @@ public class AppointmentService {
         List<AppointmentModel> appointmentModels = appointmentRepository.findByDoctorUsername(doctorUsername);
         return appointmentModels.stream().map(appointment -> new PatientsOfDoctorDto(
                 appointment.getAppointmentId(),
-                appointment.getAppointmentTime(),
+                appointment.getAppointmentStartTime(),
                 appointment.getStatus().name(),
                 // Using userId as userName placeholder since username is not stored on appointment
                 appointment.getUserId(),
@@ -286,7 +293,7 @@ public class AppointmentService {
             AppointmentModel appt = fb.getAppointment();
             return new AdminFeedbackDto(
                 appt.getAppointmentId(),
-                appt.getAppointmentTime(),
+                appt.getAppointmentStartTime(),
                 appt.getUsersFullName(),
                 appt.getUsersEmail(),
                 appt.getDoctorFullName(),
@@ -303,5 +310,10 @@ public class AppointmentService {
             throw new RuntimeException("Feedback not found.");
         }
         feedbackRepository.deleteById(feedbackId);
+    }
+
+    public Object doctorsBookedAppointments(String doctorUsername) {
+        // Reuse existing logic; could be extended later
+        return getDoctorAppointments(doctorUsername);
     }
 }

@@ -10,7 +10,7 @@ public record DoctorAppointmentDto(
         String usersFullName,
         String userEmail,
         String reason,
-        LocalDateTime appointmentTime,
+        LocalDateTime appointmentStartTime,
         boolean didUserGiveFeedback,
         List<FeedbackDto> feedbacks
 ) {
