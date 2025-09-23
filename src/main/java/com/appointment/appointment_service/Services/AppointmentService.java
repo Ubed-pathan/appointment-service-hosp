@@ -312,8 +312,24 @@ public class AppointmentService {
         feedbackRepository.deleteById(feedbackId);
     }
 
-    public Object doctorsBookedAppointments(String doctorUsername) {
-        // Reuse existing logic; could be extended later
-        return getDoctorAppointments(doctorUsername);
+    public List<ScheduledAppointmentDto> doctorsBookedAppointments(String date, String doctorUsername) {
+        LocalDate targetDate;
+        try {
+            targetDate = LocalDate.parse(date); // expecting format yyyy-MM-dd
+        } catch (Exception ex) {
+            throw new RuntimeException("Invalid date format. Use yyyy-MM-dd");
+        }
+        LocalDateTime start = targetDate.atStartOfDay();
+        LocalDateTime end = start.plusDays(1); // exclusive
+        var appointmentModels = appointmentRepository.findByDoctorUsernameAndAppointmentStartTimeBetween(doctorUsername, start, end);
+        return appointmentModels.stream()
+                .map(a -> new ScheduledAppointmentDto(
+                        a.getAppointmentId(),
+                        a.getAppointmentStartTime(),
+                        a.getAppointmentEndTime()
+                ))
+                .toList();
     }
+
+
 }

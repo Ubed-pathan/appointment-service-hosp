@@ -1,7 +1,6 @@
 package com.appointment.appointment_service.Repositories;
 
 import com.appointment.appointment_service.Models.AppointmentModel;
-import com.appointment.appointment_service.Models.FeedbackModel;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDateTime;
@@ -37,4 +36,7 @@ public interface AppointmentRepository extends JpaRepository<AppointmentModel, S
             LocalDateTime proposedStart,
             LocalDateTime proposedEnd
     );
+
+    // fetch only appointments for a doctor on a specific date range (start inclusive, end exclusive)
+    List<AppointmentModel> findByDoctorUsernameAndAppointmentStartTimeBetween(String doctorUsername, LocalDateTime start, LocalDateTime end);
 }

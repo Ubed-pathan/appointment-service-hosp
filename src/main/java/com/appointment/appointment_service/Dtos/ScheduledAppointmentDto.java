@@ -1,6 +1,9 @@
 package com.appointment.appointment_service.Dtos;
 
-public class ScheduledAppointmentDto {
-    String appointmentId;
-    String AppointmentTime;
-}
+import java.time.LocalDateTime;
+
+public record ScheduledAppointmentDto(
+        String appointmentId,
+        LocalDateTime appointmentStartTime,
+        LocalDateTime appointmentEndTime
+) {}

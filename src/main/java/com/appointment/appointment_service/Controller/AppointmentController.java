@@ -135,14 +135,14 @@ public class AppointmentController {
         }
     }
 
-    @GetMapping("/doctorsBookedAppointments/{doctorUsername}" )
-    public ResponseEntity<?> doctorsBookedAppointments(@PathVariable String doctorUsername) {
+    @GetMapping("/doctorsBookedAppointments/{date}/{doctorUsername}" )
+    public ResponseEntity<?> doctorsBookedAppointments( @PathVariable String date ,@PathVariable String doctorUsername) {
         try {
-            var appointments = appointmentService.doctorsBookedAppointments(doctorUsername);
+            var appointments = appointmentService.doctorsBookedAppointments(date,doctorUsername);
+            System.out.println(appointments );
             return ResponseEntity.ok(appointments);
         } catch (RuntimeException ex) {
             return ResponseEntity.badRequest().body(ex.getMessage());
         }
     }
-
 }
