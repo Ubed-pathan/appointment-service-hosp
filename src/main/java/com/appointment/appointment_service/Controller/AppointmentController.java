@@ -2,7 +2,6 @@ package com.appointment.appointment_service.Controller;
 
 import com.appointment.appointment_service.Dtos.AppointmentDto;
 import com.appointment.appointment_service.Dtos.FeedbackDto;
-import com.appointment.appointment_service.Models.AppointmentModel;
 import com.appointment.appointment_service.Services.AppointmentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

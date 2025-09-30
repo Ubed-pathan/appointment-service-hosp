@@ -17,7 +17,7 @@ spring:
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
 server:
-  port: ${PORT}
+  port: ${APPOINTMENT_SERVICE_PORT}
   servlet:
     context-path: /appointment
 
