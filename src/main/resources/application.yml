@@ -2,9 +2,9 @@ spring:
   application:
     name: appointment-service
   datasource:
-    url: ${DATABASE_URL}
-    username: ${USER_NAME}
-    password: ${PASSWORD}
+    url: ${APPOINTMENT_DATABASE_URL}
+    username: ${APPOINTMENTDB_USER_NAME}
+    password: ${APPOINTMENTDB_PASSWORD}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
