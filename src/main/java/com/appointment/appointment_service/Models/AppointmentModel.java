@@ -1,16 +1,35 @@
 package com.appointment.appointment_service.Models;
 
-import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
-import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
-
 import java.time.LocalDateTime;
 
+import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+
 @Entity
+@Table(
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_appointments_doctor_start_time",
+                        columnNames = {"doctor_id", "appointment_start_time"}
+                )
+        }
+)
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -23,6 +42,7 @@ public class AppointmentModel {
     private String appointmentId;
 
     @Column(
+            name = "appointment_start_time",
             nullable = false,
             updatable = false
     )
@@ -53,6 +73,7 @@ public class AppointmentModel {
     private String usersEmail;
 
     @Column(
+            name = "doctor_id",
             nullable = false,
             updatable = false
     )

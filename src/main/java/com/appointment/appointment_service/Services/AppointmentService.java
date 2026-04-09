@@ -1,21 +1,35 @@
 package com.appointment.appointment_service.Services;
 
-import com.appointment.appointment_service.Clients.DoctorClient;
-import com.appointment.appointment_service.Clients.UserClient;
-import com.appointment.appointment_service.Dtos.*;
-import com.appointment.appointment_service.Models.AppointmentModel;
-import com.appointment.appointment_service.Models.FeedbackModel;
-import com.appointment.appointment_service.Repositories.AppointmentRepository;
-import com.appointment.appointment_service.Repositories.FeedbackRepository;
-import jakarta.validation.Valid;
-import lombok.AllArgsConstructor;
-import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.stereotype.Service;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.appointment.appointment_service.Clients.DoctorClient;
+import com.appointment.appointment_service.Clients.UserClient;
+import com.appointment.appointment_service.Dtos.AdminFeedbackDto;
+import com.appointment.appointment_service.Dtos.AppointmentCreatedEvent;
+import com.appointment.appointment_service.Dtos.AppointmentDotForAdminDashboard;
+import com.appointment.appointment_service.Dtos.AppointmentDto;
+import com.appointment.appointment_service.Dtos.DoctorAppointmentDto;
+import com.appointment.appointment_service.Dtos.DoctorDto;
+import com.appointment.appointment_service.Dtos.FeedbackDto;
+import com.appointment.appointment_service.Dtos.PatientsOfDoctorDto;
+import com.appointment.appointment_service.Dtos.ScheduledAppointmentDto;
+import com.appointment.appointment_service.Dtos.UserVerificationDto;
+import com.appointment.appointment_service.Dtos.UsersAppointmentsDto;
+import com.appointment.appointment_service.Models.AppointmentModel;
+import com.appointment.appointment_service.Models.FeedbackModel;
+import com.appointment.appointment_service.Repositories.AppointmentRepository;
+import com.appointment.appointment_service.Repositories.FeedbackRepository;
+
+import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
 
 @Service
 @AllArgsConstructor
@@ -31,6 +45,7 @@ public class AppointmentService {
         return userServiceClient.isValidUser(userDto);
     }
 
+    @Transactional
     public String bookAppointment(AppointmentDto dto) {
 
         UserVerificationDto userDto = new UserVerificationDto(dto.userId(), dto.usersFullName(), dto.usersEmail());
@@ -62,7 +77,13 @@ public class AppointmentService {
                 dto.userId(), dto.doctorId(), startOfDay, endOfDay);
         if (alreadyBooked) throw new RuntimeException("User already has an appointment with this doctor on this day.");
 
-        // Overlap detection: existing.end > new.start AND existing.start < new.end
+        // Previous approach for exact same-slot checks (commented out by request).
+        // It is vulnerable to race conditions because two concurrent transactions can both pass this check.
+        // boolean sameSlotBooked = appointmentRepository.existsByDoctorIdAndAppointmentStartTime(
+        //         dto.doctorId(), dto.appointmentStartTime());
+        // if (sameSlotBooked) throw new RuntimeException("Doctor is already booked for this start time.");
+
+        // Keep overlap validation for business rule consistency.
         boolean overlaps = appointmentRepository
                 .existsByDoctorIdAndAppointmentEndTimeGreaterThanAndAppointmentStartTimeLessThan(
                         dto.doctorId(), dto.appointmentStartTime(), dto.appointmentEndTime());
@@ -83,7 +104,20 @@ public class AppointmentService {
         appointmentModel.setDoctorUsername(doctorDto.doctorUsername());
         appointmentModel.setDoctorSpecialization(doctorDto.doctorSpecialization());
         appointmentModel.setReason(dto.reason());
-        appointmentRepository.save(appointmentModel);
+
+        try {
+            // Flush immediately so DB unique constraint violations surface in this transaction.
+            appointmentRepository.saveAndFlush(appointmentModel);
+        } catch (DataIntegrityViolationException ex) {
+            String errorMessage = ex.getMostSpecificCause() != null
+                    ? ex.getMostSpecificCause().getMessage()
+                    : ex.getMessage();
+
+            if (errorMessage != null && errorMessage.contains("uk_appointments_doctor_start_time")) {
+                throw new RuntimeException("Doctor is already booked for this start time.");
+            }
+            throw new RuntimeException("Unable to create appointment due to a database constraint violation.");
+        }
 
         var event = new AppointmentCreatedEvent(
                 appointmentModel.getAppointmentId(),
