@@ -28,7 +28,7 @@ services:
     ports:
       - "5252:80"
   kafka:
-    image: bitnami/kafka:3.5
+    image: soldevelo/kafka:3.5
     container_name: kafka
     ports:
       - "9092:9092"
